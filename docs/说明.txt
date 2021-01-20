@@ -1,0 +1,7 @@
+引入sql-rest-1.0.jar
+在sql-rest-1.0.jar 文件夹下执行
+mvn install:install-file -Dfile=sql-rest-1.0.jar -DgroupId=sql.rest -DartifactId=sql-rest -Dversion=1.0 -Dpackaging=jar
+引入excel-rest-1.0.jar
+在excel-rest-1.0.jar 文件夹下执行
+mvn install:install-file -Dfile=excel-rest-1.0.jar -DgroupId=excel.rest -DartifactId=excel-rest -Dversion=1.0 -Dpackaging=jar
+

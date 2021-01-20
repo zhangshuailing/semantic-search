@@ -1,0 +1,19 @@
+server:
+  port: 10010
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: root
+    password: gfkd_mysql
+    url: jdbc:mysql://10.170.130.230:3306/yyjs?useUnicode=true&characterEncoding=UTF-8&zeroDateTimeBehavior=convertToNull&allowMultiQueries=true&useSSL=false&serverTimezone=GMT%2B8
+    type: com.alibaba.druid.pool.DruidDataSource
+mybatis:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+# 开启 swagger
+swagger:
+  enable: true
+
+
+uploadFile_path:
+  G:/project/semantic-search/uploadFile/file/
