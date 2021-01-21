@@ -14,4 +14,15 @@ public class SysConfig {
     public static void setUploadFile_path(String uploadFile_path) {
         SysConfig.uploadFile_path = uploadFile_path;
     }
+
+
+    private static String fileSuffix;
+
+    public static String getFileSuffix() {
+        return fileSuffix;
+    }
+
+    public static void setFileSuffix(String fileSuffix) {
+        SysConfig.fileSuffix = fileSuffix;
+    }
 }

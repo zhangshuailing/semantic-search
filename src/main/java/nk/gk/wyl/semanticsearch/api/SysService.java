@@ -8,4 +8,5 @@ public interface SysService {
      * @param sqlSessionTemplate
      */
     void init(SqlSessionTemplate sqlSessionTemplate);
+    void copy(SqlSessionTemplate sqlSessionTemplate);
 }

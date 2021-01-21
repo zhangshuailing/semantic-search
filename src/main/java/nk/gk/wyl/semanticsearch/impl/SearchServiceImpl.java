@@ -1,6 +1,7 @@
 package nk.gk.wyl.semanticsearch.impl;
 
 import nk.gk.wyl.semanticsearch.api.SearchService;
+import nk.gk.wyl.semanticsearch.config.SysConfig;
 import nk.gk.wyl.semanticsearch.util.IkUtil;
 import nk.gk.wyl.sql.api.SqlService;
 import nk.gk.wyl.sql.util.QueryUtil;
@@ -11,10 +12,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+
 /**
 * @Description:    接口
 * @Author:         zhangshuailing
@@ -43,7 +42,7 @@ public class SearchServiceImpl implements SearchService {
     public List<Map<String, Object>> SearchLog(SqlSessionTemplate sqlSessionTemplate,int size)throws Exception {
         if(size <=0)
             size=10;
-        String sql = "select *  from  rec_info order by orderby LIMIT "+size;
+        String sql = "select *  from  ques_info order by orderby LIMIT "+size;
         return sqlService.findList(sqlSessionTemplate,sql);
     }
 
@@ -64,8 +63,10 @@ public class SearchServiceImpl implements SearchService {
         // 通过q 获取分词结果
         List<String> result = IkUtil.getStringList(q);
         logger.info("分词结果"+result);
+
+
         String search_sql = "";
-        String sql = "select  ai.id,ai.ques_id,ai.xsd,ai.create_time,ai.click_num,ai.pri_img,ai.file_path,CONVERT (content USING utf8) AS content  " +
+        String sql = "select  ai.id,ai.ques_id,ai.xsd,DATE_FORMAT(ai.create_time,'%Y/%m/%d %H:%i:%s') create_time,ai.click_num,ai.pri_img,ai.file_path,CONVERT (content USING utf8) AS content  " +
                 "from ques_info qi,answer_info ai where ai.ques_id=qi.id ";
 
         String orderby_sql =" order by xsd  desc";
@@ -103,41 +104,75 @@ public class SearchServiceImpl implements SearchService {
         }
 
         Map<String, Object> data = null;
-        // blob 转字符串
-        // CONVERT (*** USING utf8) AS userName
-        // 若分词没有结果直接匹配问题表中的名称
-        if(result==null || result.size() ==0){
+        int size = 0;
+        // 先匹配问题
+        {
             search_sql = sql + " and qi.name ='"+q+"' " + orderby_sql;
             data = sqlService.page(sqlSessionTemplate,map,search_sql);
-        }else{
-            // 按照关键字全匹配
-            String like_sql = "";
-            for (int i = 0; i < result.size(); i++) {
-                // key_words like '%姚明%' and key_words like '%身高%'
-                if(i ==0){
-                    like_sql =" key_words like '%"+result.get(i)+"%' ";
-                }else{
-                    like_sql =like_sql + " and key_words like '%"+result.get(i)+"%' ";
-                }
-            }
-            search_sql = sql + " and  " +like_sql+ orderby_sql;
-            data = sqlService.page(sqlSessionTemplate,map,search_sql);
             Map<String, Integer> pager = (Map<String, Integer>) data.get("pager");
-            int total_num = pager.get("total");
-            if(total_num==0){
-                search_sql = "";
-                // 若关键字全匹配不到 匹配单个就可以
+            size = pager.get("total");
+        }
+        if(size ==0){
+            // blob 转字符串
+            // CONVERT (*** USING utf8) AS userName
+            // 若分词没有结果直接匹配问题表中的名称
+            if(result==null || result.size() ==0){
+                search_sql = sql + " and qi.name ='"+q+"' " + orderby_sql;
+                data = sqlService.page(sqlSessionTemplate,map,search_sql);
+            }else{
+                // 按照关键字全匹配
+                String like_sql = "";
                 for (int i = 0; i < result.size(); i++) {
                     // key_words like '%姚明%' and key_words like '%身高%'
                     if(i ==0){
                         like_sql =" key_words like '%"+result.get(i)+"%' ";
                     }else{
-                        like_sql =like_sql + " or  key_words like '%"+result.get(i)+"%' ";
+                        like_sql =like_sql + " and key_words like '%"+result.get(i)+"%' ";
                     }
                 }
-                search_sql = sql + " and  (" +like_sql+")"+ orderby_sql;
+                search_sql = sql + " and  " +like_sql+ orderby_sql;
                 data = sqlService.page(sqlSessionTemplate,map,search_sql);
+                Map<String, Integer> pager = (Map<String, Integer>) data.get("pager");
+                int total_num = pager.get("total");
+                if(total_num==0){
+                    search_sql = "";
+                    // 若关键字全匹配不到 匹配单个就可以
+                    for (int i = 0; i < result.size(); i++) {
+                        // key_words like '%姚明%' and key_words like '%身高%'
+                        if(i ==0){
+                            like_sql =" key_words like '%"+result.get(i)+"%' ";
+                        }else{
+                            like_sql =like_sql + " or  key_words like '%"+result.get(i)+"%' ";
+                        }
+                    }
+                    search_sql = sql + " and  (" +like_sql+")"+ orderby_sql;
+                    data = sqlService.page(sqlSessionTemplate,map,search_sql);
+                }
             }
+        }
+
+
+        List<Map<String,Object>> data_= (List<Map<String, Object>>) data.get("data");
+        for (int i = 0; i < data_.size(); i++) {
+            Map<String,Object> map1 = data_.get(i);
+            map1.put("answer","");
+            try{
+                String content = map1.get("content").toString();
+                String[] str = content.split("\n");
+                if(str.length>=3){
+                    String value = str[0]+"\n"+str[1]+"\n";
+                    map1.put("answer",value);
+                    map1.put("content",content.replaceFirst(value,""));
+                }else if(str.length==2){
+                    String value = str[0]+"\n";
+                    map1.put("answer",value);
+                    map1.put("content",content.replaceFirst(value,""));
+                }
+            }catch (Exception e){
+                continue;
+            }
+
+
         }
         return data;
     }
@@ -161,39 +196,51 @@ public class SearchServiceImpl implements SearchService {
         String search_sql = "";
         // 查询数据
         List<Map<String,Object>> list ;
-        String sql = "select related_keys  from ques_info  where ";
+        String sql = "select related_keys  from ques_info  where 1=1 ";
                 // "key_words like '%姚明%' and key_words like '%身高%' ";
-        if(ik_result==null || ik_result.size() ==0){
+
+        int size = 0;
+        // 先匹配问题
+        {
             search_sql = sql + " and name ='"+q+"' ";
             list = sqlService.findList(sqlSessionTemplate,search_sql);
-        }else{
-            // 按照关键字全匹配
-            String like_sql = "";
-            for (int i = 0; i < ik_result.size(); i++) {
-                // key_words like '%姚明%' and key_words like '%身高%'
-                if(i ==0){
-                    like_sql =" key_words like '%"+ik_result.get(i)+"%' ";
-                }else{
-                    like_sql =like_sql + " and key_words like '%"+ik_result.get(i)+"%' ";
-                }
-            }
-            search_sql = sql  +like_sql;
-            list = sqlService.findList(sqlSessionTemplate,search_sql);
-            if(list.size()==0){
-                search_sql = "";
-                // 若关键字全匹配不到 匹配单个就可以
+            size = list.size();
+        }
+        if(size ==0){
+            if(ik_result==null || ik_result.size() ==0){
+                search_sql = sql + " and name ='"+q+"' ";
+                list = sqlService.findList(sqlSessionTemplate,search_sql);
+            }else{
+                // 按照关键字全匹配
+                String like_sql = "";
                 for (int i = 0; i < ik_result.size(); i++) {
                     // key_words like '%姚明%' and key_words like '%身高%'
                     if(i ==0){
-                        like_sql =" key_words like '%"+ik_result.get(i)+"%' ";
+                        like_sql ="  key_words like '%"+ik_result.get(i)+"%' ";
                     }else{
-                        like_sql =like_sql + " or  key_words like '%"+ik_result.get(i)+"%' ";
+                        like_sql =like_sql + " and key_words like '%"+ik_result.get(i)+"%' ";
                     }
                 }
-                search_sql = sql + "  (" +like_sql+")";
+                search_sql = sql +" and " +like_sql;
                 list = sqlService.findList(sqlSessionTemplate,search_sql);
+                if(list.size()==0){
+                    search_sql = "";
+                    // 若关键字全匹配不到 匹配单个就可以
+                    for (int i = 0; i < ik_result.size(); i++) {
+                        // key_words like '%姚明%' and key_words like '%身高%'
+                        if(i ==0){
+                            like_sql =" and key_words like '%"+ik_result.get(i)+"%' ";
+                        }else{
+                            like_sql =like_sql + " or  key_words like '%"+ik_result.get(i)+"%' ";
+                        }
+                    }
+                    search_sql = sql + " and  (" +like_sql+")";
+                    list = sqlService.findList(sqlSessionTemplate,search_sql);
+                }
             }
         }
+
+
         HashSet<String> hSet = new HashSet<>();
         if(list.size() !=0){
             for (int i = 0; i < list.size(); i++) {
@@ -206,6 +253,114 @@ public class SearchServiceImpl implements SearchService {
             }
         }
         result= new ArrayList<>(hSet);
+        return result;
+    }
+
+    /**
+     * 相似推荐
+     *
+     * @param sqlSessionTemplate
+     * @param q
+     * @return
+     * @throws Exception
+     */
+    @Override
+    public List<Map<String, Object>> relatedRecObj(SqlSessionTemplate sqlSessionTemplate, String q) throws Exception {
+        // 推荐的关键词
+        List<String> list = relatedRec(sqlSessionTemplate,q);
+        List<Map<String,Object>> result = new ArrayList<>();
+        for (int i = 0; i < list.size(); i++) {
+            Map<String,Object> map = new HashMap<>();
+            String value = list.get(i);
+            map.put("name",value);
+            map.put("pic",value+ SysConfig.getFileSuffix());
+            result.add(map);
+        }
+        return result;
+    }
+
+    /**
+     * 相关图片推荐
+     *
+     * @param sqlSessionTemplate
+     * @param q
+     * @return
+     * @throws Exception
+     */
+    @Override
+    public List<Map<String, Object>> relatedGraph(SqlSessionTemplate sqlSessionTemplate, String q) throws Exception {
+        String sql = "select *  from ques_info  where 1=1 ";
+        String search_sql = "";
+        int size = 0;
+        String orderby = " ";
+        List<Map<String,Object>> list = new ArrayList<>();
+        // 先匹配问题
+        {
+            search_sql = sql + " and name ='"+q+"' "+orderby;
+            list = sqlService.findList(sqlSessionTemplate,search_sql);
+            size = list.size();
+        }
+        if(size ==0){
+            // 先分词
+            // 通过q 获取分词结果
+            List<String> ik_result = IkUtil.getStringList(q);
+            logger.info("分词结果"+ik_result);
+            if(ik_result==null || ik_result.size() ==0){
+                search_sql = sql + " and name ='"+q+"' "+orderby;
+                list = sqlService.findList(sqlSessionTemplate,search_sql);
+            }else{
+                // 按照关键字全匹配
+                String like_sql = "";
+                for (int i = 0; i < ik_result.size(); i++) {
+                    // key_words like '%姚明%' and key_words like '%身高%'
+                    if(i ==0){
+                        like_sql =" key_words like '%"+ik_result.get(i)+"%' ";
+                    }else{
+                        like_sql =like_sql + " and key_words like '%"+ik_result.get(i)+"%' ";
+                    }
+                }
+                search_sql = sql +"and" +like_sql +orderby;
+                list = sqlService.findList(sqlSessionTemplate,search_sql);
+                if(list.size()==0){
+                    search_sql = "";
+                    // 若关键字全匹配不到 匹配单个就可以
+                    for (int i = 0; i < ik_result.size(); i++) {
+                        // key_words like '%姚明%' and key_words like '%身高%'
+                        if(i ==0){
+                            like_sql =" key_words like '%"+ik_result.get(i)+"%' ";
+                        }else{
+                            like_sql =like_sql + " or  key_words like '%"+ik_result.get(i)+"%' ";
+                        }
+                    }
+                    search_sql = sql + " and (" +like_sql+")"+orderby;
+                    list = sqlService.findList(sqlSessionTemplate,search_sql);
+                }
+            }
+        }
+        List<Map<String,Object>> result = new ArrayList<>();
+        if(list!=null && list.size()>0){
+            result.add(list.get(0));
+        }
+        return result;
+    }
+
+    /**
+     * 获取goin url
+     *
+     * @param id
+     * @return
+     * @throws Exception
+     */
+    @Override
+    public List<Map<String,Object>> findList(SqlSessionTemplate sqlSessionTemplate,String id) throws Exception {
+        List<Map<String,Object>> result = null;
+        String table = "goin_url";
+        if(!"".equals(id)){
+            result = new ArrayList<>();
+            result.add(sqlService.get(sqlSessionTemplate,table,id,null));
+        }else{
+            result = sqlService.findList(sqlSessionTemplate,table,new HashMap<>());
+        }
         return result;
     }
 

@@ -41,4 +41,30 @@ public interface SearchService {
      */
     List<String> relatedRec(SqlSessionTemplate sqlSessionTemplate,String q) throws Exception;
 
+    /**
+     * 相似推荐
+     * @param sqlSessionTemplate
+     * @param q
+     * @return
+     * @throws Exception
+     */
+    List<Map<String,Object>> relatedRecObj(SqlSessionTemplate sqlSessionTemplate,String q) throws Exception;
+
+    /**
+     * 相关图片推荐
+     * @param sqlSessionTemplate
+     * @param q
+     * @return
+     * @throws Exception
+     */
+    List<Map<String,Object>> relatedGraph(SqlSessionTemplate sqlSessionTemplate,String q) throws Exception;
+
+    /**
+     * 获取goin url
+     * @param id
+     * @return
+     * @throws Exception
+     */
+    List<Map<String,Object>> findList(SqlSessionTemplate sqlSessionTemplate,String id) throws Exception;
+
 }

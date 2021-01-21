@@ -61,7 +61,7 @@ public class SearchController {
             if(StringUtils.isEmpty(searchEntity.getQ())){
                 return new Response().error("缺少 q 参数");
             }
-            return new Response().success(searchService.relatedRec(sqlSessionTemplate,searchEntity.getQ()));
+            return new Response().success(searchService.relatedRecObj(sqlSessionTemplate,searchEntity.getQ()));
         } catch (Exception e) {
             e.printStackTrace();
             return new Response().error(e.getMessage());
@@ -79,6 +79,8 @@ public class SearchController {
             Map<String,Object> map = new HashMap<>();
             map.put("q",fullSearchEntity.getQ());
             map.put("order",fullSearchEntity.getOrder());
+            map.put("pageNo",fullSearchEntity.getPageNo()==0?1:fullSearchEntity.getPageNo());
+            map.put("pageSize",fullSearchEntity.getPageSize()==0?1:fullSearchEntity.getPageSize());
             return new Response().success(searchService.page(sqlSessionTemplate,map));
         } catch (Exception e) {
             e.printStackTrace();
@@ -129,5 +131,38 @@ public class SearchController {
     }
 
 
+    /**
+     * 获取goin url
+     * @return 返回数据
+     */
+    @GetMapping("goin")
+    @ApiOperation(value = "获取goin url")
+    public @ResponseBody Response list(@RequestParam(value = "id" ,defaultValue = "",required = false) String id){
+        try {
+            return  new Response().success(searchService.findList(sqlSessionTemplate,id));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new Response().error(e.getMessage());
+        }
+    }
+
+
+    /**
+     * 搜索推荐
+     * @return 返回数据
+     */
+    @PostMapping("related-graph")
+    @ApiOperation(value = "相关图片推荐")
+    public @ResponseBody Response relatedGraph(@RequestBody SearchEntity searchEntity){
+        try {
+            if(StringUtils.isEmpty(searchEntity.getQ())){
+                return new Response().error("缺少 q 参数");
+            }
+            return new Response().success(searchService.relatedGraph(sqlSessionTemplate,searchEntity.getQ()));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new Response().error(e.getMessage());
+        }
+    }
 
 }

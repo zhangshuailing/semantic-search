@@ -5,6 +5,7 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
     username: root
     password: gfkd_mysql
+    #password: 123456
     url: jdbc:mysql://10.170.130.230:3306/yyjs?useUnicode=true&characterEncoding=UTF-8&zeroDateTimeBehavior=convertToNull&allowMultiQueries=true&useSSL=false&serverTimezone=GMT%2B8
     type: com.alibaba.druid.pool.DruidDataSource
 mybatis:
@@ -16,4 +17,4 @@ swagger:
 
 
 uploadFile_path:
-  G:/project/semantic-search/uploadFile/file/
+  /home/zhangshuailing/jar/tb_zy/uploadFile/file/

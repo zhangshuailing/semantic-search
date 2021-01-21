@@ -34,6 +34,8 @@ public class StaticData {
         ques_info.put("name","");
         ques_info.put("key_words","");
         ques_info.put("related_keys","");
+        ques_info.put("image","");
+        ques_info.put("goin_id","");
         Map<String,String> answer_info = new HashMap<>();
         answer_info.put("content","");
         answer_info.put("pri_img","");
@@ -53,6 +55,10 @@ public class StaticData {
         ExcelFields.put("关键词2","key_words");
         ExcelFields.put("相关关键词1","related_keys");
         ExcelFields.put("相关关键词2","related_keys");
+        ExcelFields.put("图片地址","image");
+        ExcelFields.put("数据集编号","goin_id");
+
+
         ExcelFields.put("问题答案","content");
         ExcelFields.put("相关图片","pri_img");
         ExcelFields.put("相关文档","file_path");

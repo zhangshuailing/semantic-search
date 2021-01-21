@@ -71,13 +71,29 @@ public class ExcelController {
     @GetMapping("clean")
     @ApiOperation(value = "重置参数")
     public @ResponseBody
-    nk.gk.wyl.semanticsearch.entity.result.Response clean(){
+   Response clean(){
         try {
             sysService.init(sqlSessionTemplate);
-            return new nk.gk.wyl.semanticsearch.entity.result.Response().success(true);
+            return new Response().success(true);
         } catch (Exception e) {
             e.printStackTrace();
-            return new nk.gk.wyl.semanticsearch.entity.result.Response().error(e.getMessage());
+            return new Response().error(e.getMessage());
+        }
+    }
+
+    /**
+     * 搜索推荐
+     * @return 返回数据
+     */
+    //@GetMapping("copy")
+    //@ApiOperation(value = "复制问题参数")
+    public @ResponseBody Response copy(){
+        try {
+            sysService.init(sqlSessionTemplate);
+            return new Response().success(true);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new Response().error(e.getMessage());
         }
     }
 }
