@@ -9,7 +9,9 @@ import nk.gk.wyl.sql.util.QueryUtil;
 import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,7 +25,15 @@ public class ExcelServiceImpl implements ExcelService {
      * 写入数据
      */
     @Override
+    @Transactional
     public boolean writeData(SqlSessionTemplate sqlSessionTemplate, List<Map<String,String>> list) throws Exception{
+        if(list!=null && list.size()>0){
+            List<String> list_ = new ArrayList<>();
+            list_ = new ArrayList<>();
+            list_.add("ques_info");
+            list_.add("answer_info");
+            sqlService.deleteFromTable(sqlSessionTemplate,list_);
+        }
         // 定义excel和数据库中字段对应
         Map<String,String> map_fields = StaticData.getExcelFields();
         // 定义 对象
